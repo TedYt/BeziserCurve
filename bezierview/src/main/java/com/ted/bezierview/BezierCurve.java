@@ -1,5 +1,6 @@
 package com.ted.bezierview;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -82,17 +83,51 @@ public class BezierCurve extends View {
                         w / 3 * 2 - 100 * mValue, h / 3 - 150 * mValue,
                         w / 3 * 2, h / 2);
 
+        //上面的方法调用后，mPath 落在了点(w / 3 * 2, h / 2),
+        //下面方法就会一这个点为起点
+        mPath.cubicTo( w / 3 * 2, h / 3 * 2,
+                        w / 3   , h / 3 * 2,
+                        w / 3 , h / 2);
+        
         canvas.drawPath(mPath, mPaint);
     }
 
     public void beginAnima(){
-        startAnima();
+        startForwardAnima();
     }
 
     private float mValue;
-    private void startAnima(){
-        ValueAnimator va = ValueAnimator.ofFloat(0f,1f,0f);
-        va.setDuration(3000);
+    private void startForwardAnima(){
+        ValueAnimator va = ValueAnimator.ofFloat(0f,1f);
+        va.setDuration(200);
+        va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mValue = (float)animation.getAnimatedValue();
+                invalidate();
+            }
+        });
+        va.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) { }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                startBackwardAnima();
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) { }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) { }
+        });
+        va.start();
+    }
+
+    private void startBackwardAnima() {
+        ValueAnimator va = ValueAnimator.ofFloat(1f,0f);
+        va.setDuration(2000);
         va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -108,7 +143,7 @@ public class BezierCurve extends View {
 
         switch (event.getAction()){
             case MotionEvent.ACTION_UP:
-                startAnima();
+                startForwardAnima();
                 break;
             default:
                 break;
