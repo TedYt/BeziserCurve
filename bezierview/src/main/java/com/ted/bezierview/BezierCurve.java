@@ -34,6 +34,10 @@ public class BezierCurve extends View {
     private Paint mPaint;
     private Path mPath;
 
+    private static final int SMALL_CIRCLE_RADIUS = 25;
+    //当距离小于等于GAP时，触发Sticky效果
+    private static final float GAP = 1.5f * SMALL_CIRCLE_RADIUS;
+
     public BezierCurve(Context context) {
         this(context,null);
     }
@@ -50,6 +54,8 @@ public class BezierCurve extends View {
     private void init() {
 
         mPaint =  new Paint();
+        mPaint.setAntiAlias(true);
+        mPaint.setDither(true);
         mPaint.setColor(Color.RED);
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
@@ -77,28 +83,65 @@ public class BezierCurve extends View {
 
         mPath.reset();
 
+        //小球下落，大球吸收小球
+        showStep1Anim(canvas,w,h);
+    }
+
+    private void showStep1Anim(Canvas canvas, int w, int h) {
         mPath.moveTo(w / 3, h / 2);//Bezier 曲线的 起点
         //1 2参数是控制点的坐标，3 4 参数是终点的坐标
         //mPath.quadTo(w / 2, h / 4, w / 3 * 2, h / 2);
         mPath.cubicTo(  w / 3 + 100 * mValue, h / 3 - 150 * mValue,
-                        w / 3 * 2 - 100 * mValue, h / 3 - 150 * mValue,
-                        w / 3 * 2, h / 2);
+                w / 3 * 2 - 100 * mValue, h / 3 - 150 * mValue,
+                w / 3 * 2, h / 2);
 
         //上面的方法调用后，mPath 落在了点(w / 3 * 2, h / 2),
         //下面方法就会一这个点为起点
         mPath.cubicTo( w / 3 * 2, h / 3 * 2,
-                        w / 3   , h / 3 * 2,
-                        w / 3 , h / 2);
-        
+                w / 3   , h / 3 * 2,
+                w / 3 , h / 2);
+
+        float gap = (h / 3 - 150) - h / 8 + 120;
+        mPath.addCircle( w /2 , h / 8 + gap * mValueofSC, SMALL_CIRCLE_RADIUS, Path.Direction.CW);
         canvas.drawPath(mPath, mPaint);
     }
 
     public void beginAnima(){
-        startAnima();
+        startAnim();
     }
 
     private float mValue;
-    private void startAnima(){
+    private float mValueofSC;//for small circle
+    private void startAnim(){
+
+        //ValueAnimator vaSmallCircle = createVaOfSmallCircle();
+        ValueAnimator va1OfBigCircle = createVa1OfBigCircle();
+        ValueAnimator va2OfBigCircle = createVa2OfBigCircle();
+
+        AnimatorSet animSet = new AnimatorSet();
+        //animSet.play(vaSmallCircle).before(va1OfBigCircle);
+        animSet.play(va1OfBigCircle).before(va2OfBigCircle);
+        animSet.start();
+    }
+
+    //大球的上半部分的动画，往回收缩的效果
+    private ValueAnimator createVa2OfBigCircle() {
+
+        ValueAnimator va = ValueAnimator.ofFloat(1f, 0f);
+        va.setDuration(1000);
+        va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mValue = (float) animation.getAnimatedValue();
+                invalidate();
+            }
+        });
+
+        return va;
+    }
+
+    //大球的上半部分的动画，往外突出的效果
+    private ValueAnimator createVa1OfBigCircle() {
         ValueAnimator va = ValueAnimator.ofFloat(0f,1f);
         va.setDuration(200);
         va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -109,19 +152,29 @@ public class BezierCurve extends View {
             }
         });
 
-        ValueAnimator va2 = ValueAnimator.ofFloat(1f, 0f);
-        va2.setDuration(1000);
-        va2.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        return va;
+    }
+
+    //小球下落的动画
+    private ValueAnimator createVaOfSmallCircle() {
+        ValueAnimator va = ValueAnimator.ofFloat(0f, 1.6f);
+        va.setDuration(1500);
+        va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                mValue = (float) animation.getAnimatedValue();
+                mValueofSC = (float)animation.getAnimatedValue();
+                if (mValueofSC >= 0.52){
+                    //animation.cancel();
+                    startAnim();
+                }
+
                 invalidate();
             }
         });
 
-        AnimatorSet animaSet = new AnimatorSet();
-        animaSet.play(va).before(va2);
-        animaSet.start();
+        va.start();
+
+        return va;
     }
 
 
@@ -130,7 +183,8 @@ public class BezierCurve extends View {
 
         switch (event.getAction()){
             case MotionEvent.ACTION_UP:
-                startAnima();
+                //startAnim();
+                createVaOfSmallCircle();
                 break;
             default:
                 break;

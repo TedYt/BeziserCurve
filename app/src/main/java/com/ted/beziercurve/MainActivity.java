@@ -22,12 +22,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        mBC.postDelayed(new Runnable() {
+        /*mBC.postDelayed(new Runnable() {
             @Override
             public void run() {
                 Toast.makeText(MainActivity.this, "Animation Show time", Toast.LENGTH_SHORT).show();
                 mBC.beginAnima();
             }
-        },500);
+        },500);*/
     }
 }
