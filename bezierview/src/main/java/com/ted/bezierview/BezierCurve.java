@@ -1,6 +1,7 @@
 package com.ted.bezierview;
 
 import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -93,11 +94,11 @@ public class BezierCurve extends View {
     }
 
     public void beginAnima(){
-        startForwardAnima();
+        startAnima();
     }
 
     private float mValue;
-    private void startForwardAnima(){
+    private void startAnima(){
         ValueAnimator va = ValueAnimator.ofFloat(0f,1f);
         va.setDuration(200);
         va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -107,43 +108,29 @@ public class BezierCurve extends View {
                 invalidate();
             }
         });
-        va.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) { }
 
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                startBackwardAnima();
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) { }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) { }
-        });
-        va.start();
-    }
-
-    private void startBackwardAnima() {
-        ValueAnimator va = ValueAnimator.ofFloat(1f,0f);
-        va.setDuration(2000);
-        va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        ValueAnimator va2 = ValueAnimator.ofFloat(1f, 0f);
+        va2.setDuration(1000);
+        va2.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                mValue = (float)animation.getAnimatedValue();
+                mValue = (float) animation.getAnimatedValue();
                 invalidate();
             }
         });
-        va.start();
+
+        AnimatorSet animaSet = new AnimatorSet();
+        animaSet.play(va).before(va2);
+        animaSet.start();
     }
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
         switch (event.getAction()){
             case MotionEvent.ACTION_UP:
-                startForwardAnima();
+                startAnima();
                 break;
             default:
                 break;
