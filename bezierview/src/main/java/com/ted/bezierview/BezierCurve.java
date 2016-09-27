@@ -118,10 +118,34 @@ public class BezierCurve extends View {
         ValueAnimator va1OfBigCircle = createVa1OfBigCircle();
         ValueAnimator va2OfBigCircle = createVa2OfBigCircle();
 
+        ValueAnimator va3OfBigCircle = createVa3OfBigCircle();
+
+        ValueAnimator nullAnim = ValueAnimator.ofFloat(0f, 1f);
+        nullAnim.setDuration(500);
+
         AnimatorSet animSet = new AnimatorSet();
-        //animSet.play(vaSmallCircle).before(va1OfBigCircle);
         animSet.play(va1OfBigCircle).before(va2OfBigCircle);
+        //sanimSet.play(va1OfBigCircle).before(va3OfBigCircle);
+        animSet.play(va2OfBigCircle).before(nullAnim);
+        animSet.play(nullAnim).before(va3OfBigCircle);
+
+        //animSet.playSequentially(va1OfBigCircle,va2OfBigCircle,va3OfBigCircle);
+
         animSet.start();
+    }
+
+    private ValueAnimator createVa3OfBigCircle() {
+        ValueAnimator va = ValueAnimator.ofFloat(1.6f,4.0f);
+        va.setDuration(1000);
+        va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mValueofSC = (float)animation.getAnimatedValue();
+                invalidate();
+            }
+        });
+
+        return va;
     }
 
     //大球的上半部分的动画，往回收缩的效果
